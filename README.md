@@ -41,6 +41,10 @@ sample data so the dashboard isn't empty.
 
 Check it worked: **Table Editor** should now show `budgets` and `expenses`.
 
+Then run `supabase/auth-upgrade.sql` the same way. That one adds accounts:
+every row gets an owner, and the policies change from "anyone" to "only the
+user this row belongs to".
+
 ### 3. Get your keys
 **Project Settings → API**. Copy the **Project URL** and the **anon public**
 key.
@@ -61,6 +65,9 @@ Open the URL it prints. You should see the seeded month with three categories
 over budget.
 
 ### 5. Use it
+Create an account on the sign-in screen first — budgets and expenses are
+private per account.
+
 - **Set a budget** — what you expect to spend on a category this month
 - **Record an expense** — money that actually went out
 - The table and the totals recompute from the database on every change
@@ -89,34 +96,52 @@ reaches the browser — the same reason `gemini_proxy.php` existed.
 Skip this entirely and the app still works; the button just reports that the
 function isn't deployed.
 
-### 7. Before you put real figures in this
-Right now `schema.sql` gives the anonymous key full read and write access,
-because you asked for single-user with no login. **Anyone who finds your
-anon key can read and edit your data** — and it's visible in the page source.
+### 7. How the data is protected
 
-That's fine while you're learning on your own machine. It is not fine for
-real company numbers on a public URL.
+The browser talks straight to the database using a key that is printed in the
+page source. Anyone can read that key. So the key cannot be what protects the
+data — the database has to.
 
-To lock it down, add Supabase Auth (email login is a few lines), add a
-`user_id uuid references auth.users` column to both tables, and replace the
-policies with:
+That is what Row Level Security does, and it is set up in
+`supabase/auth-upgrade.sql`:
 
 ```sql
-create policy "own rows only" on expenses for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+create policy "own expenses only"
+  on expenses for all
+  to authenticated
+  using      (user_id = auth.uid())
+  with check (user_id = auth.uid());
 ```
 
-Now the database itself refuses to hand your rows to anyone else, no matter
-what the frontend asks for. That's the real lesson of Supabase: security
-lives in the database, not in your JavaScript.
+`auth.uid()` is read from the signed token the browser sends. `using`
+decides which rows you may read, update or delete; `with check` decides
+which rows you may create. Both compare against the token, which the browser
+cannot forge.
+
+Two consequences worth noticing:
+
+**The frontend never filters by user.** Look at `load()` in `App.jsx` —
+it selects everything and adds no user condition. It doesn't need one. The
+database returns only your rows regardless of what the query asks for.
+
+**Inserts never send a user_id.** The column is declared
+`default auth.uid()`, so Postgres stamps the owner itself. The app cannot
+set it wrong, and cannot set it to someone else.
+
+The anonymous key is then revoked from both tables entirely, so holding it
+gets you a login screen and nothing more.
+
+That's the real lesson of Supabase: security lives in the database, not in
+your JavaScript.
 
 ---
 
 ## Files worth reading
 
 ```
-supabase/schema.sql              the tables, the variance view, the RLS policies
+supabase/schema.sql              the tables and the variance view
+supabase/auth-upgrade.sql        row ownership and the RLS policies
+src/components/Auth.jsx          sign in / sign up
 src/lib/supabase.js              client setup
 src/App.jsx                      all the reads and writes
 src/lib/analyse.js               works out what went over budget

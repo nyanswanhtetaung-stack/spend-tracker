@@ -177,3 +177,29 @@ button.link:hover { color: var(--over); }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ---- Sign in / sign up ------------------------------------------- */
+.auth-card { max-width: 420px; margin: 0 auto; }
+
+.auth-form { display: grid; gap: 14px; margin-top: 18px; }
+
+.auth-form label { display: grid; gap: 6px; }
+
+.auth-form label span {
+  font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.auth-form input {
+  padding: 10px 12px; border-radius: var(--radius);
+  border: 1px solid var(--rule-firm); background: var(--paper);
+  font-family: var(--sans); font-size: 14px; color: var(--ink);
+}
+
+.auth-form input:focus { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+.notice {
+  padding: 12px 14px; border-radius: var(--radius); font-size: 13px;
+  background: var(--under-soft); color: var(--under);
+  border: 1px solid var(--rule-firm);
+}

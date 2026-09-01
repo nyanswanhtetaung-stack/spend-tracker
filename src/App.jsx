@@ -5,6 +5,7 @@ import VarianceTable from './components/VarianceTable'
 import BudgetForm from './components/BudgetForm'
 import ExpenseForm from './components/ExpenseForm'
 import Findings from './components/Findings'
+import Auth from './components/Auth'
 
 export default function App() {
   const [month, setMonth] = useState(monthKey())
@@ -13,6 +14,20 @@ export default function App() {
   const [expenses, setExpenses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [session, setSession] = useState(undefined)   // undefined = still checking
+
+  // ---- Who is signed in --------------------------------------------
+  // getSession() reads the token already saved in this browser, so a
+  // refresh doesn't sign you out. onAuthStateChange keeps this in step
+  // with sign-in and sign-out happening anywhere in the app.
+  useEffect(() => {
+    if (!isConfigured) { setSession(null); return }
+    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, next) => setSession(next)
+    )
+    return () => listener.subscription.unsubscribe()
+  }, [])
 
   // ---- Reading data ------------------------------------------------
   // This is the whole "backend". No API to write: .from('table').select()
@@ -59,7 +74,7 @@ export default function App() {
     setLoading(false)
   }
 
-  useEffect(() => { load(month) }, [month])
+  useEffect(() => { if (session) load(month) }, [month, session])
 
   const analysis = useMemo(() => analyseMonth(rows, expenses), [rows, expenses])
 
@@ -71,6 +86,8 @@ export default function App() {
   }, [rows])
 
   if (!isConfigured) return <NotConfigured />
+  if (session === undefined) return <Splash />
+  if (!session) return <Auth />
 
   return (
     <div className="app">
@@ -91,6 +108,13 @@ export default function App() {
           </select>
           <button className="ghost" onClick={() => load(month)} disabled={loading}>
             {loading ? 'Loading…' : 'Refresh'}
+          </button>
+          <button
+            className="ghost"
+            onClick={() => supabase.auth.signOut()}
+            title={session?.user?.email || ''}
+          >
+            Sign out
           </button>
         </div>
       </header>
@@ -205,6 +229,14 @@ function readableError(err) {
            'Check the policies in schema.sql section 4.'
   }
   return err.message || 'Something went wrong talking to the database.'
+}
+
+function Splash() {
+  return (
+    <div className="app">
+      <div className="card"><p className="hint">Checking your session…</p></div>
+    </div>
+  )
 }
 
 function NotConfigured() {
