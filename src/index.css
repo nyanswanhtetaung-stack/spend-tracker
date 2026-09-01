@@ -1,0 +1,179 @@
+/* ============================================================
+   Design tokens.
+   Everything in the app pulls colour, spacing and type from here.
+   That single constraint is most of why a UI looks "clean" —
+   nothing can drift, because there is nothing to drift to.
+   ============================================================ */
+:root {
+  --paper:      #F2F4F7;
+  --surface:    #FFFFFF;
+  --ink:        #0E1621;
+  --ink-soft:   #5A6675;
+  --rule:       #DCE2EA;
+  --rule-firm:  #B8C2CE;
+
+  /* Red and green here carry meaning (over / under budget),
+     they are not decoration. */
+  --over:       #B3261E;
+  --over-soft:  #FBE9E7;
+  --under:      #10684B;
+  --under-soft: #E4F2EC;
+
+  --radius: 6px;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Figures are set in mono with tabular numerals so digits line up
+   vertically down a column — the way a real ledger reads. */
+.fig {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.app { max-width: 1180px; margin: 0 auto; padding: 32px 24px 80px; }
+
+/* ---- Masthead ---- */
+.masthead {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 24px; flex-wrap: wrap;
+  padding-bottom: 20px; margin-bottom: 28px;
+  border-bottom: 2px solid var(--ink);
+}
+.masthead h1 {
+  margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -0.02em;
+}
+.masthead .eyebrow {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-soft); margin-bottom: 6px;
+}
+
+/* ---- Cards ---- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.card + .card { margin-top: 16px; }
+.card h2 {
+  margin: 0 0 2px; font-size: 15px; font-weight: 600;
+}
+.card .hint { margin: 0 0 16px; color: var(--ink-soft); font-size: 13px; }
+
+.grid { display: grid; gap: 16px; }
+@media (min-width: 880px) { .grid.two { grid-template-columns: 1fr 1fr; } }
+
+/* ---- Summary figures ---- */
+.totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+  background: var(--rule); border: 1px solid var(--rule);
+  border-radius: var(--radius); overflow: hidden; }
+.total { background: var(--surface); padding: 16px 18px; }
+.total .label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-soft);
+}
+.total .value { font-size: 22px; font-weight: 600; margin-top: 4px; }
+.total .value.over  { color: var(--over); }
+.total .value.under { color: var(--under); }
+
+/* ---- Ledger table ---- */
+table.ledger { width: 100%; border-collapse: collapse; }
+table.ledger th {
+  text-align: left; font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft);
+  font-weight: 500; padding: 0 10px 8px; border-bottom: 1px solid var(--rule-firm);
+}
+table.ledger th.num, table.ledger td.num { text-align: right; }
+table.ledger td {
+  padding: 9px 10px; border-bottom: 1px solid var(--rule); vertical-align: middle;
+}
+table.ledger tbody tr:hover { background: #FAFBFC; }
+td.over  { color: var(--over);  font-weight: 500; }
+td.under { color: var(--under); }
+
+/* ---- Signature element: the variance bar ----
+   A single axis runs down the column. Bars grow LEFT when a category came
+   in under budget and RIGHT when it went over, so overspending is visible
+   as a shape before you read a single number. */
+.varbar { position: relative; height: 18px; width: 100%; min-width: 120px; }
+.varbar::before {
+  content: ''; position: absolute; left: 50%; top: -9px; bottom: -9px;
+  width: 1px; background: var(--rule-firm);
+}
+.varbar span {
+  position: absolute; top: 3px; height: 12px; border-radius: 2px;
+}
+.varbar span.over  { left: 50%; background: var(--over); }
+.varbar span.under { right: 50%; background: var(--under); opacity: 0.55; }
+
+/* ---- Forms ---- */
+label { display: block; font-size: 12px; font-weight: 500; margin-bottom: 5px; }
+input, select, textarea {
+  width: 100%; padding: 8px 10px; font-family: var(--sans); font-size: 14px;
+  color: var(--ink); background: var(--surface);
+  border: 1px solid var(--rule-firm); border-radius: var(--radius);
+}
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--ink); outline-offset: -1px; border-color: var(--ink);
+}
+.row { display: grid; gap: 12px; margin-bottom: 12px; }
+@media (min-width: 620px) { .row.three { grid-template-columns: 1.2fr 1fr 1fr; }
+                            .row.two   { grid-template-columns: 1fr 1fr; } }
+
+button {
+  font-family: var(--sans); font-size: 13px; font-weight: 500;
+  padding: 9px 16px; border-radius: var(--radius); cursor: pointer;
+  border: 1px solid var(--ink); background: var(--ink); color: #fff;
+  transition: opacity .15s;
+}
+button:hover:not(:disabled) { opacity: 0.85; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button.ghost { background: transparent; color: var(--ink); border-color: var(--rule-firm); }
+button.link  { background: none; border: none; color: var(--ink-soft);
+               padding: 2px 6px; font-size: 12px; text-decoration: underline; }
+button.link:hover { color: var(--over); }
+
+.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.toolbar select { width: auto; min-width: 180px; }
+
+/* ---- Findings ---- */
+.finding {
+  padding: 12px 14px; border-left: 3px solid var(--rule-firm);
+  background: #FAFBFC; border-radius: 0 var(--radius) var(--radius) 0;
+}
+.finding + .finding { margin-top: 8px; }
+.finding.over  { border-left-color: var(--over);  background: var(--over-soft); }
+.finding.under { border-left-color: var(--under); background: var(--under-soft); }
+.finding h3 { margin: 0 0 3px; font-size: 13px; font-weight: 600; }
+.finding p  { margin: 0; font-size: 13px; color: var(--ink-soft); }
+
+.empty { padding: 28px; text-align: center; color: var(--ink-soft); font-size: 13px; }
+.error {
+  padding: 12px 14px; border-radius: var(--radius); font-size: 13px;
+  background: var(--over-soft); color: var(--over); border: 1px solid #F3C7C3;
+  margin-bottom: 16px;
+}
+.tag {
+  font-family: var(--mono); font-size: 10px; padding: 2px 6px; border-radius: 3px;
+  background: var(--over-soft); color: var(--over); letter-spacing: 0.06em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
