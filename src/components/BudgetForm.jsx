@@ -12,14 +12,16 @@ export default function BudgetForm({ month, categories, onSaved, setError }) {
     if (!name || !amount) return
     setSaving(true)
 
-    // upsert = insert, or update if that (month, category) already exists.
-    // The UNIQUE constraint in schema.sql is what makes this work — without
+    // upsert = insert, or update if that (month, category) already exists
+    // FOR THIS USER. user_id is not sent — the column defaults to auth.uid(),
+    // and Postgres fills it before deciding whether this is a conflict.
+    // The unique index in auth-upgrade.sql is what makes this work — without
     // it, re-entering a budget would create a duplicate row instead.
     const { error } = await supabase
       .from('budgets')
       .upsert(
         { month, category: name, planned_amount: Number(amount) },
-        { onConflict: 'month,category' }
+        { onConflict: 'user_id,month,category' }
       )
 
     setSaving(false)
