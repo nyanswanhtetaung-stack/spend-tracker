@@ -1,5 +1,7 @@
 # Spend Tracker
 
+**[Live demo →](https://spendtrack-orcin.vercel.app/)**
+
 Plan what the company will spend each month, record what it actually spends,
 then see row by row where the two diverged.
 
