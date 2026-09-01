@@ -5,7 +5,38 @@
 Plan what the company will spend each month, record what it actually spends,
 then see row by row where the two diverged.
 
-Built with React + Vite and Supabase — the same shape Lovable generates.
+## What it does
+
+- Set a planned budget per category, per month
+- Record expenses as they happen, each with a note
+- A SQL view computes planned-vs-actual variance — the frontend never does the maths
+- An optional written summary reads the expense *notes* and says whether an
+  overspend was a one-off renewal or a creeping pattern
+- Every account sees only its own rows, enforced by Postgres, not by JavaScript
+
+## Stack
+
+React 18 · Vite · Supabase (Postgres, Auth, Edge Functions) · deployed on Vercel
+
+## The parts worth looking at
+
+**The arithmetic lives in SQL.** `monthly_variance` is a view doing a full outer
+join between budgets and actuals, so a category that was budgeted but never spent
+*and* one spent but never budgeted both still appear — which is exactly the
+overspend you want a report to catch. React only renders rows.
+
+**The frontend does no access control.** `load()` in `App.jsx` selects everything
+and adds no user filter. It doesn't need one: the RLS policies compare `user_id`
+against `auth.uid()` taken from the request's token, so the database returns only
+your rows no matter what the query asks for.
+
+**Inserts never send a user_id.** The column is declared `default auth.uid()`, so
+Postgres stamps the owner itself. The client cannot set it wrong, and cannot set
+it to someone else.
+
+**The API key never reaches the browser.** The Gemini call runs inside a Supabase
+edge function with the key held in server-side secrets — the browser only ever
+sees the finished sentence.
 
 ---
 
