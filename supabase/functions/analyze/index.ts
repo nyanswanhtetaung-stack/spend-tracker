@@ -20,6 +20,17 @@ const CORS = {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
 
+  // Require a signed-in user, not just the anon key.
+  //
+  // Supabase has already verified this token's signature before we run —
+  // but it accepts the anon key as a valid token, and the anon key is
+  // printed in the page source of the deployed site. Without this check a
+  // stranger could call this endpoint all day and spend the Gemini quota.
+  // The 'role' claim tells the two apart.
+  if (roleFromRequest(req) !== 'authenticated') {
+    return json({ error: 'Sign in to use the written summary.' }, 401)
+  }
+
   try {
     const apiKey = Deno.env.get('GEMINI_API_KEY')
     if (!apiKey) {
@@ -74,6 +85,16 @@ Deno.serve(async (req) => {
     return json({ error: 'Unexpected error in analyze function' }, 500)
   }
 })
+
+function roleFromRequest(req: Request): string {
+  const jwt = (req.headers.get('Authorization') || '').replace(/^Bearers+/i, '')
+  try {
+    const claims = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    return JSON.parse(atob(claims)).role || ''
+  } catch {
+    return ''
+  }
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
